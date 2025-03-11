@@ -22,28 +22,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        - target: i686-unknown-linux-musl
-          features: mimalloc
-        - target: x86_64-unknown-linux-gnu
-          features: mimalloc
-        - target: x86_64-unknown-linux-musl
-          features: mimalloc
-        - target: armv7-unknown-linux-musleabihf
-          features: mimalloc
-        - target: armv7-unknown-linux-gnueabihf
-          features: mimalloc
-        - target: arm-unknown-linux-gnueabi
-          features: mimalloc
-        - target: arm-unknown-linux-gnueabihf
-          features: mimalloc
-        - target: arm-unknown-linux-musleabi
-          features: mimalloc
-        - target: arm-unknown-linux-musleabihf
-          features: mimalloc
-        - target: aarch64-unknown-linux-gnu
-          features: mimalloc
-        - target: aarch64-unknown-linux-musl
-          features: mimalloc
+        target:
+          - name: i686-unknown-linux-musl
+            features: mimalloc
+          - name: x86_64-unknown-linux-gnu
+            features: mimalloc
+          - name: x86_64-unknown-linux-musl
+            features: mimalloc
+          - name: armv7-unknown-linux-musleabihf
+            features: mimalloc
+          - name: armv7-unknown-linux-gnueabihf
+            features: mimalloc
+          - name: arm-unknown-linux-gnueabi
+            features: mimalloc
+          - name: arm-unknown-linux-gnueabihf
+            features: mimalloc
+          - name: arm-unknown-linux-musleabi
+            features: mimalloc
+          - name: arm-unknown-linux-musleabihf
+            features: mimalloc
+          - name: aarch64-unknown-linux-gnu
+            features: mimalloc
+          - name: aarch64-unknown-linux-musl
+            features: mimalloc
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
@@ -59,7 +60,7 @@ jobs:
       - name: Build ${{ matrix.platform.target }}
         timeout-minutes: 120
         run: |
-          cross build --release -p rama-cli --target ${{ matrix.platform.target }} --features ${{ matrix.platform.features }}
+          cross build --release -p rama-cli --target ${{ matrix.target.name }} --features ${{ matrix.target.features }}
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
@@ -73,7 +74,6 @@ jobs:
   build-release-macos:
     runs-on: macos-latest
     env:
-      BUILD_EXTRA_FEATURES: "full"
       RUST_BACKTRACE: full
     strategy:
       fail-fast: false
@@ -100,7 +100,7 @@ jobs:
       - name: Build release
         shell: bash
         run: |
-          cargo build --release -p rama-cli --target ${{ matrix.platform.target }}
+          cargo build --release -p rama-cli --target ${{ matrix.target }}
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
@@ -134,7 +134,7 @@ jobs:
 
       - name: Build release
         run: |
-          cargo build --release -p rama-cli --target ${{ matrix.platform.target }}
+          cargo build --release -p rama-cli --target ${{ matrix.target }}
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
