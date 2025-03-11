@@ -12,40 +12,46 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: stable
 
 jobs:
-  build-release-cross:
+  build-release-linux:
     runs-on: ubuntu-latest
     env:
       RUST_BACKTRACE: full
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - target: i686-unknown-linux-musl
-            toolchain: stable
-          - target: x86_64-pc-windows-gnu
-            toolchain: stable
-          - target: x86_64-unknown-linux-gnu
-            toolchain: stable
-          - target: x86_64-unknown-linux-musl
-            toolchain: stable
-          - target: aarch64-unknown-linux-gnu
-            toolchain: stable
-          - target: aarch64-unknown-linux-musl
-            toolchain: stable
-          - target: mips-unknown-linux-gnu
-            toolchain: nightly
-
+        - target: i686-unknown-linux-musl
+          features: mimalloc
+        - target: x86_64-unknown-linux-gnu
+          features: mimalloc
+        - target: x86_64-unknown-linux-musl
+          features: mimalloc
+        - target: armv7-unknown-linux-musleabihf
+          features: mimalloc
+        - target: armv7-unknown-linux-gnueabihf
+          features: mimalloc
+        - target: arm-unknown-linux-gnueabi
+          features: mimalloc
+        - target: arm-unknown-linux-gnueabihf
+          features: mimalloc
+        - target: arm-unknown-linux-musleabi
+          features: mimalloc
+        - target: arm-unknown-linux-musleabihf
+          features: mimalloc
+        - target: aarch64-unknown-linux-gnu
+          features: mimalloc
+        - target: aarch64-unknown-linux-musl
+          features: mimalloc
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install ${{ matrix.platform.toolchain }}
-          rustup default ${{ matrix.platform.toolchain }}
-          rustup override set ${{ matrix.platform.toolchain }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          env-vars: "RUST_TOOLCHAIN=${{env.RUST_TOOLCHAIN}}"
 
       - name: Install cross
         run: cargo install cross
@@ -53,7 +59,7 @@ jobs:
       - name: Build ${{ matrix.platform.target }}
         timeout-minutes: 120
         run: |
-          cross build --release -p rama-cli --target ${{ matrix.platform.target }}
+          cross build --release -p rama-cli --target ${{ matrix.platform.target }} --features ${{ matrix.platform.features }}
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
@@ -65,14 +71,13 @@ jobs:
           tag_name: ${{ inputs.tag || github.ref_name }}
 
   build-release-macos:
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     env:
       BUILD_EXTRA_FEATURES: "full"
       RUST_BACKTRACE: full
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
         target:
           - x86_64-apple-darwin
           - aarch64-apple-darwin
@@ -85,18 +90,17 @@ jobs:
           brew install gnu-tar
           echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
 
-      - name: Install Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install stable
-          rustup default stable
-          rustup override set stable
-          rustup target add --toolchain stable ${{ matrix.target }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          env-vars: "RUST_TOOLCHAIN=${{env.RUST_TOOLCHAIN}}"
 
       - name: Build release
         shell: bash
         run: |
-          cross build --release -p rama-cli --target ${{ matrix.platform.target }}
+          cargo build --release -p rama-cli --target ${{ matrix.platform.target }}
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
@@ -110,22 +114,27 @@ jobs:
   build-release-windows:
     runs-on: windows-latest
     env:
-      RUSTFLAGS: "-C target-feature=+crt-static"
       RUST_BACKTRACE: full
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-gnu
+          - i686-pc-windows-gnu
     steps:
       - uses: actions/checkout@v4
       - uses: ilammy/setup-nasm@v1
 
-      - name: Install Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install stable
-          rustup default stable
-          rustup override set stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          env-vars: "RUST_TOOLCHAIN=${{env.RUST_TOOLCHAIN}}"
 
       - name: Build release
         run: |
-          pwsh ./build/build-host-release.ps1 "full winservice"
+          cargo build --release -p rama-cli --target ${{ matrix.platform.target }}
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
