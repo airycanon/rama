@@ -2388,6 +2388,7 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 name = "rama"
 version = "0.2.0-alpha.7"
 dependencies = [
+ "aws-lc-sys",
  "base64 0.22.1",
  "bytes",
  "derive_more",
@@ -2995,7 +2996,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
